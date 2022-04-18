@@ -1,7 +1,6 @@
 import argparse
 import cv2
 import dlib
-import glob
 import logging
 import logging.config
 import os
@@ -18,6 +17,7 @@ from imutils.video import VideoStream
 from shared_data import CONFIG_DIR, grayColor, greenColor, redColor
 from threading import Thread
 from utils import remove_files
+
 
 args = None
 global logger
@@ -124,7 +124,8 @@ def run():
 
     cv2.destroyAllWindows()
     stream.stop()
-    
+
+
 def populate_args():
     global args
     parser = argparse.ArgumentParser(description="Driver Alert System")
@@ -133,6 +134,7 @@ def populate_args():
     parser.add_argument("--webcam", required=False, default=0,
                         help="camera device id to use")
     args = parser.parse_args()
+
 
 def setup_logging():
     # TODO: Update log handler to move logfile to logsdir
@@ -154,9 +156,11 @@ def setup_logging():
     logging.config.dictConfig(logging_config)
     logger = logging.getLogger("driver_alert")
 
+
 def setup():
     populate_args()
     setup_logging()
+
 
 if __name__ == "__main__":
     setup()

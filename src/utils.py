@@ -11,6 +11,7 @@ def remove_files(dir, pattern, raise_exception=False):
         if raise_exception:
             raise(e)
 
+
 class Cached:
     def __init__(self, *args, **kwargs):
         self.cached_data = {}
@@ -23,6 +24,7 @@ class Cached:
                 self.cached_data[func] = res
             return self.cached_data[func]
         return inner
+
 
 def _create_type(meta, name, attrs):
     type_name = f'{name}Type'
@@ -59,6 +61,7 @@ class _ClassPropertyDescriptor(object):
     def setter(self, func):
         self.fset = func
         return self
+
 
 def classproperty(func):
     return _ClassPropertyDescriptor(func)

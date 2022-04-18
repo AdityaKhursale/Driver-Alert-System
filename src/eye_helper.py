@@ -4,6 +4,7 @@ from scipy.spatial import distance as dist
 from shared_data import MODELS_DIR
 from utils import ClassPropertyType, classproperty
 
+
 class Eye(metaclass= ClassPropertyType):
     # Open EYE Aspect Ratio Threshold
     # If ratio < thresh --> close, open otherwise
