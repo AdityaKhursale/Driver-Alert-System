@@ -1,0 +1,7 @@
+tensorflow-macos
+tensorflow-metal
+numpy
+matplotlib
+opencv-python
+scipy
+imutils
