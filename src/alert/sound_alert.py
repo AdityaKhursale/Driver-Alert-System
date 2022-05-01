@@ -8,7 +8,7 @@ from shared_data import RESOURCES_DIR
 logger = logging.getLogger("driver_alert")
 
 
-class Alert:
+class SoundAlert:
     @staticmethod
-    def alert_drowsiness():
+    def play_drowsiness_alert():
         playsound(os.path.join(RESOURCES_DIR, "you_suffer.mp3"))

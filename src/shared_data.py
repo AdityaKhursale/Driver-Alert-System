@@ -12,5 +12,3 @@ Color = namedtuple("Color", "B G R")
 grayColor = Color(100, 100, 100)
 greenColor = Color(0, 255, 0)
 redColor = Color(0, 0, 255)
-
-FACIAL_LANDMARK_IDENTIFIER = os.path.join(MODELS_DIR,)
