@@ -11,4 +11,4 @@ logger = logging.getLogger("driver_alert")
 class Alert:
     @staticmethod
     def alert_drowsiness():
-        playsound(os.path.join(RESOURCES_DIR, "sound.wav"))
+        playsound(os.path.join(RESOURCES_DIR, "you_suffer.mp3"))

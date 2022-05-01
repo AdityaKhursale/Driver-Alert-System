@@ -8,8 +8,8 @@ from utils import ClassPropertyType, classproperty
 class Eye(metaclass= ClassPropertyType):
     # Open EYE Aspect Ratio Threshold
     # If ratio < thresh --> close, open otherwise
-    EYE_AR_THRESH = 0.3
-    SLEEP_CONSEC_FR_THRESH = 100
+    EYE_AR_THRESH = 0.25
+    SLEEP_CONSEC_FR_THRESH = 60
     
     __predictor_model = os.path.join(MODELS_DIR, "shape_predictor.dat")
 

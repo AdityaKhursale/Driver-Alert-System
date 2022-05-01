@@ -8,8 +8,8 @@ formatters:
 handlers:
   console:
     class: logging.StreamHandler
-    level: INFO
-    formatter: brief
+    level: INFO # DEBUG
+    formatter: brief # with_timestamp
     stream: ext://sys.stdout
   file:
     class: logging.handlers.RotatingFileHandler

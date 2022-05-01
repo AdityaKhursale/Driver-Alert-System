@@ -2,7 +2,6 @@ import os
 import re
 
 def remove_files(dir, pattern, raise_exception=False):
-    import pdb; pdb.set_trace()
     try:
         for f in os.listdir(dir):
             if re.search(pattern, f):

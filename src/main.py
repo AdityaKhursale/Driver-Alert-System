@@ -47,7 +47,7 @@ def run():
         # TODO: Revisit and convert this to full window
         logger.debug("frame number: {}".format(frame_no))
         frame = stream.read()
-        frame = resize(frame, width=450) 
+        frame = cv2.resize(frame, (1300, 800))
 
         logger.debug("converting to grayscale")
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -107,11 +107,10 @@ def run():
                     t = Thread(target=Alert.alert_drowsiness)
                     t.daemon = True
                     t.start()
-                
                     # TODO: Beautify and align on the UI
                     logger.debug("Setting sleepy text as Yes")
-                    cv2.putText(frame, "Sleepy: Yes", (10, 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, redColor, 2)
+                    cv2.putText(frame, "Driver Asleep", (150, 100),
+                                cv2.FONT_HERSHEY_SIMPLEX, 3, redColor, 3)
             else:
                 counter = 0
                 drowsy_alarm_on = False
