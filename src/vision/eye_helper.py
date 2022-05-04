@@ -4,6 +4,7 @@ import logging
 from collections import namedtuple
 from imutils import face_utils
 from scipy.spatial import distance as dist
+from shared_data import FacialmarkPos
 from utils.decorators import ClassPropertyType, classproperty
 
 
@@ -13,10 +14,8 @@ logger = logging.getLogger("driver_alert")
 class EyeHelper(metaclass=ClassPropertyType):
     
     EYE_AR_THRESH = 0.18  # Open eye threshold
-    SLEEP_CONSEC_FR_THRESH = 20
+    SLEEP_CONSEC_FR_THRESH = 8
 
-    EyePosition = namedtuple("EyePosition", "start end")
-    
     @staticmethod
     def get_aspect_ratio(eye_marks):
         if len(eye_marks) < 6:
@@ -36,13 +35,13 @@ class EyeHelper(metaclass=ClassPropertyType):
     
     @classproperty
     def left_eye_pos(cls):
-        return cls.EyePosition(face_utils.FACIAL_LANDMARKS_IDXS["left_eye"][0],
-                               face_utils.FACIAL_LANDMARKS_IDXS["left_eye"][1])
-    
+        return FacialmarkPos(face_utils.FACIAL_LANDMARKS_IDXS["left_eye"][0],
+                             face_utils.FACIAL_LANDMARKS_IDXS["left_eye"][1])
+
     @classproperty
     def right_eye_pos(cls):
-        return cls.EyePosition(face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][0],
-                               face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][1])
+        return FacialmarkPos(face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][0],
+                             face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][1])
 
     @classmethod
     def get_eyes(cls, shapes):

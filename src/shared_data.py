@@ -11,9 +11,12 @@ MODELS_DIR = os.path.join(ROOT_DIR, "models")
 
 
 Color = namedtuple("Color", "B G R")
+FacialmarkPos = namedtuple("Position", "start end")
 
 class ColorPalette(Enum):
     grayColor = Color(100, 100, 100)
     greenColor = Color(0, 255, 0)
     redColor = Color(0, 0, 255)
     whiteColor = Color(255, 255, 255)
+    orangeColor = Color(0, 165, 255)
+    yellowColor = Color(0, 255, 255)

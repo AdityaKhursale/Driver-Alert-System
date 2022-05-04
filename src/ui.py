@@ -6,5 +6,5 @@ class UI:
         return cv2.resize(frame, dims)
     
     @staticmethod
-    def draw_bbox(frame, topleft, bottomright, color):
-        return cv2.rectangle(frame, topleft, bottomright, color)
+    def draw_bbox(frame, topleft, bottomright, color, thickness=2):
+        return cv2.rectangle(frame, topleft, bottomright, color, thickness=thickness)

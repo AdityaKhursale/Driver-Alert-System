@@ -17,6 +17,7 @@ from threading import Thread
 from utils.misc import remove_files
 from vision.eye_helper import EyeHelper
 from vision.face_helper import FaceHelper
+from vision.mouth_helper import MouthHelper
 
 
 args = None
@@ -32,6 +33,7 @@ class DriverAlertSystem:
         self.ui = UI()
         self.eye_helper = EyeHelper()
         self.face_helper = FaceHelper()
+        self.mouth_helper = MouthHelper()
 
     def run(self, webcam=0):
         logger.info("starting camera capture")
@@ -47,11 +49,11 @@ class DriverAlertSystem:
             logger.debug("Frame number: {}".format(frame_no))
             frame = self.stream.read()
 
-            # TODO: Change size dynamically
-            self.ui.resize(frame, (1300, 800))
             faces = self.face_helper.get_faces(frame)
 
             cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                        ColorPalette.whiteColor.value, 2)
+            cv2.putText(frame, "Mouth:", (200, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
                         ColorPalette.whiteColor.value, 2)
             for face in faces:
                 self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face.face), ColorPalette.whiteColor.value)
@@ -81,9 +83,26 @@ class DriverAlertSystem:
                     cv2.putText(frame, "Open", (85, 702),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.greenColor.value, 2)
                 if drowsinessAlertSet > 0:
-                    cv2.putText(frame, "Drowsiness Alert", (0, 100),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 3, ColorPalette.redColor.value, 3)
+                    cv2.putText(frame, "Driver is Sleeping",
+                                (frame.shape[1] // 2 - 210, frame.shape[0] // 2),
+                                cv2.FONT_HERSHEY_SIMPLEX, 2, ColorPalette.redColor.value, 4)
                     drowsinessAlertSet -= 1
+
+                """
+                Yawning check
+                """
+                cv2.drawContours(frame,
+                                 [self.mouth_helper.get_lip_boundary(face.shapes)],
+                                 -1, ColorPalette.orangeColor.value, thickness=2)
+                if self.mouth_helper.is_mouth_open(face.shapes):
+                    cv2.putText(frame, "Open", (305, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.redColor.value, 2)
+                    cv2.putText(frame, "Driver is Yawning",
+                                (frame.shape[1] // 2 - 210, frame.shape[0] // 2),
+                                cv2.FONT_HERSHEY_SIMPLEX, 2, ColorPalette.redColor.value, 4)
+                else:
+                    cv2.putText(frame, "Closed", (305, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.greenColor.value, 2)
 
             cv2.imshow("Driver Alert System", frame)
             key = cv2.waitKey(1) & 0xFF
