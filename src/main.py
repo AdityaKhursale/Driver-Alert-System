@@ -12,7 +12,7 @@ import yaml
 from alert.sound_alert import SoundAlert
 from ui import UI
 from imutils.video import VideoStream
-from shared_data import CONFIG_DIR, grayColor, greenColor, redColor
+from shared_data import CONFIG_DIR, Color, ColorPalette
 from threading import Thread
 from utils.misc import remove_files
 from vision.eye_helper import EyeHelper
@@ -41,35 +41,46 @@ class DriverAlertSystem:
 
         frame_no = 0
         counter = 0
+        drowsinessAlertSet = 0
         while True:
             frame_no += 1
             logger.debug("Frame number: {}".format(frame_no))
             frame = self.stream.read()
 
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # TODO: Change size dynamically
             self.ui.resize(frame, (1300, 800))
-            faces = self.face_helper.get_faces(frame)
+            faces = self.face_helper.get_faces(gray)
+
+            cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                        ColorPalette.whiteColor.value, 2)
             for face in faces:
-                self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face), grayColor)
-                l_eye, r_eye = self.eye_helper.get_eyes(frame, face)
-                self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(l_eye), greenColor)
-                self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(r_eye), greenColor)
+                self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face), ColorPalette.whiteColor.value)
+                l_eye, r_eye = self.eye_helper.get_eyes(gray, face)
+                self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(l_eye), ColorPalette.greenColor.value)
+                self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(r_eye), ColorPalette.greenColor.value)
 
                 # TODO: Modularize more, move this part to drowsiness
                 # Once other features are up of drowsiness from Anurag
                 if (self.eye_helper.is_eye_closed(l_eye)
                     and self.eye_helper.is_eye_closed(r_eye)):
+                    cv2.putText(frame, "Closed", (85, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.redColor.value, 2)
                     counter += 1
                     if counter >= self.eye_helper.SLEEP_CONSEC_FR_THRESH:
                         counter = 0
                         t = Thread(target=SoundAlert.play_drowsiness_alert)
                         t.daemon = True
                         t.start()
-                        cv2.putText(frame, "Driver Asleep", (150, 100),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 3, redColor, 3)
+                        drowsinessAlertSet = 20
                 else:
                     counter = 0
-
+                    cv2.putText(frame, "Open", (85, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.greenColor.value, 2)
+                if drowsinessAlertSet > 0:
+                    cv2.putText(frame, "Drowsiness Alert", (0, 100),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 3, ColorPalette.redColor.value, 3)
+                    drowsinessAlertSet -= 1
             cv2.imshow("Driver Alert System", frame)
             key = cv2.waitKey(1) & 0xFF
 
