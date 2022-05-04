@@ -9,3 +9,4 @@ def remove_files(dir, pattern, raise_exception=False):
     except FileNotFoundError as e:
         if raise_exception:
             raise(e)
+

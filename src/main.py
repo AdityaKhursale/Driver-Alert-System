@@ -54,17 +54,28 @@ class DriverAlertSystem:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_helper.get_faces(gray)
 
-            cv2.putText(frame, "Distracted Detection", (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.grayColor.value, 2)
+            self.ui.draw_text(frame, "Distracted Detection", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        ColorPalette.blackColor.value)
             cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                        ColorPalette.whiteColor.value, 2)
+                        ColorPalette.whiteColor.value, 1)
             cv2.putText(frame, "Mouth:", (200, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                        ColorPalette.whiteColor.value, 2)
+                        ColorPalette.whiteColor.value, 1)
+            cv2.putText(frame, "Head Tilt:", (380, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                        ColorPalette.whiteColor.value, 1)
             cv2.putText(frame, "Left pupil:  ",
                         (90, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         ColorPalette.whiteColor.value, 1)
             cv2.putText(frame, "Right pupil: ",
                         (90, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        ColorPalette.whiteColor.value, 1)
+            self.ui.draw_text(frame, "Drowsiness Detection", (0, 650), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        ColorPalette.blackColor.value)
+            self.ui.draw_text(frame, "Emotion Recognition", (850, 650), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        ColorPalette.blackColor.value)
+            cv2.putText(frame, "Driver Mood:", (900, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         ColorPalette.whiteColor.value, 1)
             for face in faces:
                 self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face.face), ColorPalette.whiteColor.value)
@@ -140,20 +151,19 @@ class DriverAlertSystem:
                 text = ""
                 if h_ratio <= 0.50:
                     text = "Looking right"
-                    cv2.putText(frame, text, (1000, 80),
+                    cv2.putText(frame, text, (1000, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.redColor.value, 2)
                 elif h_ratio >= 0.65:
                     text = "Looking left"
-                    cv2.putText(frame, text, (90, 80),
+                    cv2.putText(frame, text, (90, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.redColor.value, 2)
                 elif h_ratio > 0.50 and h_ratio < 0.65:
                     text = "Looking center"
-                    cv2.putText(frame, text, (500, 80),
+                    cv2.putText(frame, text, (500, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.greenColor.value, 2)
-                print(str(h_ratio) + " " + str(text))
                 left_pupil = x_left, y_left
                 right_pupil = x_right, y_right
                 cv2.putText(frame, str(left_pupil),
