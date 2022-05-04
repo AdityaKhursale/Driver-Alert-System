@@ -19,14 +19,14 @@ class EyeHelper(metaclass=ClassPropertyType):
     @staticmethod
     def get_aspect_ratio(eye_marks):
         if len(eye_marks) < 6:
-            logger.info(0.0)
+            # logger.info(0.0)
             return 0.0
         v_distance_1 = dist.euclidean(eye_marks[1], eye_marks[5])
         v_distance_2 = dist.euclidean(eye_marks[2], eye_marks[4])
 
         h_distance = dist.euclidean(eye_marks[0], eye_marks[3])
 
-        logger.info((v_distance_1 + v_distance_2) / (2.0 * h_distance))
+        # logger.info((v_distance_1 + v_distance_2) / (2.0 * h_distance))
         return (v_distance_1 + v_distance_2) / (2.0 * h_distance)
 
     @classmethod

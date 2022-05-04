@@ -6,3 +6,4 @@ opencv-python
 scipy
 imutils
 pyyaml
+dlib

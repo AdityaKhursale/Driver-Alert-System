@@ -20,3 +20,4 @@ class ColorPalette(Enum):
     whiteColor = Color(255, 255, 255)
     orangeColor = Color(0, 165, 255)
     yellowColor = Color(0, 255, 255)
+    blueColor = Color(255, 0, 0)

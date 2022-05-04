@@ -18,6 +18,8 @@ from utils.misc import remove_files
 from vision.eye_helper import EyeHelper
 from vision.face_helper import FaceHelper
 from vision.mouth_helper import MouthHelper
+from vision.eye import Eye
+from vision.calibration import Calibration
 
 
 args = None
@@ -49,12 +51,21 @@ class DriverAlertSystem:
             logger.debug("Frame number: {}".format(frame_no))
             frame = self.stream.read()
 
-            faces = self.face_helper.get_faces(frame)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_helper.get_faces(gray)
 
-            cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "Distracted Detection", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.grayColor.value, 2)
+            cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         ColorPalette.whiteColor.value, 2)
-            cv2.putText(frame, "Mouth:", (200, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
+            cv2.putText(frame, "Mouth:", (200, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         ColorPalette.whiteColor.value, 2)
+            cv2.putText(frame, "Left pupil:  ",
+                        (90, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        ColorPalette.whiteColor.value, 1)
+            cv2.putText(frame, "Right pupil: ",
+                        (90, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        ColorPalette.whiteColor.value, 1)
             for face in faces:
                 self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face.face), ColorPalette.whiteColor.value)
                 l_eye, r_eye = self.eye_helper.get_eyes(face.shapes)
@@ -69,8 +80,8 @@ class DriverAlertSystem:
 
                 if (self.eye_helper.is_eye_closed(l_eye)
                     and self.eye_helper.is_eye_closed(r_eye)):
-                    cv2.putText(frame, "Closed", (85, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.redColor.value, 2)
+                    cv2.putText(frame, "Closed", (61, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.redColor.value, 2)
                     counter += 1
                     if counter >= self.eye_helper.SLEEP_CONSEC_FR_THRESH:
                         counter = 0
@@ -80,8 +91,8 @@ class DriverAlertSystem:
                         drowsinessAlertSet = 20
                 else:
                     counter = 0
-                    cv2.putText(frame, "Open", (85, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.greenColor.value, 2)
+                    cv2.putText(frame, "Open", (61, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.greenColor.value, 2)
                 if drowsinessAlertSet > 0:
                     cv2.putText(frame, "Driver is Sleeping",
                                 (frame.shape[1] // 2 - 210, frame.shape[0] // 2),
@@ -95,14 +106,62 @@ class DriverAlertSystem:
                                  [self.mouth_helper.get_lip_boundary(face.shapes)],
                                  -1, ColorPalette.orangeColor.value, thickness=2)
                 if self.mouth_helper.is_mouth_open(face.shapes):
-                    cv2.putText(frame, "Open", (305, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.redColor.value, 2)
+                    cv2.putText(frame, "Open", (275, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.redColor.value, 2)
                     cv2.putText(frame, "Driver is Yawning",
                                 (frame.shape[1] // 2 - 210, frame.shape[0] // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 2, ColorPalette.redColor.value, 4)
                 else:
-                    cv2.putText(frame, "Closed", (305, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.greenColor.value, 2)
+                    cv2.putText(frame, "Closed", (275, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.greenColor.value, 2)
+
+                """
+                Gaze Tracking
+                """
+                eye_left = Eye(gray, face.shapes_orig, 0, Calibration())
+                eye_right = Eye(gray, face.shapes_orig, 1, Calibration())
+                x_left = eye_left.origin[0] + eye_left.pupil.x
+                y_left = eye_left.origin[1] + eye_left.pupil.y
+                x_right = eye_right.origin[0] + eye_right.pupil.x
+                y_right = eye_right.origin[1] + eye_right.pupil.y
+                cv2.line(frame, (x_left - 5, y_left), (x_left + 5, y_left), ColorPalette.blueColor.value)
+                cv2.line(frame, (x_left, y_left - 5), (x_left, y_left + 5), ColorPalette.blueColor.value)
+                cv2.line(frame, (x_right - 5, y_right), (x_right + 5, y_right), ColorPalette.blueColor.value)
+                cv2.line(frame, (x_right, y_right - 5), (x_right, y_right + 5), ColorPalette.blueColor.value)
+
+                pupil_left = eye_left.pupil.x / (eye_left.center[0] * 2 - 10)
+                pupil_right = eye_right.pupil.x / (eye_right.center[0] * 2 - 10)
+                h_ratio = (pupil_left + pupil_right) / 2
+
+                pupil_left = eye_left.pupil.y / (eye_left.center[1] * 2 - 10)
+                pupil_right = eye_right.pupil.y / (eye_right.center[1] * 2 - 10)
+                v_ratio = (pupil_left + pupil_right) / 2
+
+                text = ""
+                if h_ratio <= 0.50:
+                    text = "Looking right"
+                    cv2.putText(frame, text, (1000, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                ColorPalette.redColor.value, 2)
+                elif h_ratio >= 0.65:
+                    text = "Looking left"
+                    cv2.putText(frame, text, (90, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                ColorPalette.redColor.value, 2)
+                elif h_ratio > 0.50 and h_ratio < 0.65:
+                    text = "Looking center"
+                    cv2.putText(frame, text, (500, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                ColorPalette.greenColor.value, 2)
+                print(str(h_ratio) + " " + str(text))
+                left_pupil = x_left, y_left
+                right_pupil = x_right, y_right
+                cv2.putText(frame, str(left_pupil),
+                            (183, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                            ColorPalette.blueColor.value, 1)
+                cv2.putText(frame, str(right_pupil),
+                            (183, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                            ColorPalette.blueColor.value, 1)
 
             cv2.imshow("Driver Alert System", frame)
             key = cv2.waitKey(1) & 0xFF

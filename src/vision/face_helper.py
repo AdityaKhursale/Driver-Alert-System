@@ -1,5 +1,5 @@
 import cv2
-import dlib  #TODO: update requirements.txt
+import dlib
 import os
 
 from utils.decorators import ClassPropertyType, classproperty
@@ -11,6 +11,7 @@ class FaceDescriptor:
     def __init__(self):
         self.face = None
         self.shapes = None
+        self.shapes_orig = None
 
 
 class FaceHelper(metaclass=ClassPropertyType):
@@ -22,12 +23,12 @@ class FaceHelper(metaclass=ClassPropertyType):
     @classmethod
     def get_faces(cls, img):
         faces = []
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        fboxes = cls.face_detector(gray, 0)
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        fboxes = cls.face_detector(img, 0)
         for fbox in fboxes:
             new_face = FaceDescriptor()
             new_face.face = fbox
-            new_face.shapes = cls._get_predicted_shapes(gray, fbox)
+            new_face.shapes_orig, new_face.shapes = cls._get_predicted_shapes(img, fbox)
             faces.append(new_face)
         return faces
 
@@ -51,6 +52,6 @@ class FaceHelper(metaclass=ClassPropertyType):
 
     @classmethod
     def _get_predicted_shapes(cls, img, face):
-        prediction = cls.predictor(img, face)
-        prediction = face_utils.shape_to_np(prediction)
-        return prediction
+        prediction_orig = cls.predictor(img, face)
+        prediction = face_utils.shape_to_np(prediction_orig)
+        return prediction_orig, prediction
