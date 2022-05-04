@@ -47,21 +47,24 @@ class DriverAlertSystem:
             logger.debug("Frame number: {}".format(frame_no))
             frame = self.stream.read()
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # TODO: Change size dynamically
             self.ui.resize(frame, (1300, 800))
-            faces = self.face_helper.get_faces(gray)
+            faces = self.face_helper.get_faces(frame)
 
             cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 1,
                         ColorPalette.whiteColor.value, 2)
             for face in faces:
-                self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face), ColorPalette.whiteColor.value)
-                l_eye, r_eye = self.eye_helper.get_eyes(gray, face)
+                self.ui.draw_bbox(frame, *self.face_helper.get_bbox(face.face), ColorPalette.whiteColor.value)
+                l_eye, r_eye = self.eye_helper.get_eyes(face.shapes)
                 self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(l_eye), ColorPalette.greenColor.value)
                 self.ui.draw_bbox(frame, *self.eye_helper.get_bbox(r_eye), ColorPalette.greenColor.value)
 
                 # TODO: Modularize more, move this part to drowsiness
                 # Once other features are up of drowsiness from Anurag
+                """
+                Sleepiness check
+                """
+
                 if (self.eye_helper.is_eye_closed(l_eye)
                     and self.eye_helper.is_eye_closed(r_eye)):
                     cv2.putText(frame, "Closed", (85, 702),
@@ -81,6 +84,7 @@ class DriverAlertSystem:
                     cv2.putText(frame, "Drowsiness Alert", (0, 100),
                                         cv2.FONT_HERSHEY_SIMPLEX, 3, ColorPalette.redColor.value, 3)
                     drowsinessAlertSet -= 1
+
             cv2.imshow("Driver Alert System", frame)
             key = cv2.waitKey(1) & 0xFF
 

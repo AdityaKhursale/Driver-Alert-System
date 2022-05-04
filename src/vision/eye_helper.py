@@ -1,15 +1,10 @@
-from numpy import eye
 import cv2
-import dlib
 import logging
-import os
 
 from collections import namedtuple
 from imutils import face_utils
 from scipy.spatial import distance as dist
-
-from utils.decorators import Cached, ClassPropertyType, classproperty
-from vision.face_helper import FaceHelper
+from utils.decorators import ClassPropertyType, classproperty
 
 
 logger = logging.getLogger("driver_alert")
@@ -17,9 +12,7 @@ logger = logging.getLogger("driver_alert")
 
 class EyeHelper(metaclass=ClassPropertyType):
     
-    # Open EYE Aspect Ratio Threshold
-    # If ratio < thresh --> close, open otherwise
-    EYE_AR_THRESH = 0.18
+    EYE_AR_THRESH = 0.18  # Open eye threshold
     SLEEP_CONSEC_FR_THRESH = 20
 
     EyePosition = namedtuple("EyePosition", "start end")
@@ -49,31 +42,20 @@ class EyeHelper(metaclass=ClassPropertyType):
     @classproperty
     def right_eye_pos(cls):
         return cls.EyePosition(face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][0],
-                              face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][1])
+                               face_utils.FACIAL_LANDMARKS_IDXS["right_eye"][1])
 
     @classmethod
-    def get_eyes(cls, img, face):
-         # TODO: Make it accept non grayed image
-        # without need to gray for faces and eyes both
-        pred = FaceHelper._get_predicted_shapes(img, face)
-        left_eye = pred[cls.left_eye_pos.start:cls.left_eye_pos.end]
-        right_eye = pred[cls.right_eye_pos.start:cls.right_eye_pos.end]
-        return cv2.convexHull(left_eye), cv2.convexHull(right_eye)
+    def get_eyes(cls, shapes):
+        return cls.get_left_eye(shapes), cls.get_right_eye(shapes)
     
     @classmethod
-    def get_left_eye(cls, img, face):
-         # TODO: Make it accept non grayed image
-        # without need to gray for faces and eyes both
-        pred = FaceHelper._get_predicted_shapes(img, face)
-        left_eye = pred[cls.left_eye_pos.start:cls.left_eye_pos.end]
+    def get_left_eye(cls, shapes):
+        left_eye = shapes[cls.left_eye_pos.start:cls.left_eye_pos.end]
         return cv2.convexHull(left_eye)
     
     @classmethod
-    def get_right_eye(cls, img, face):
-         # TODO: Make it accept non grayed image
-        # without need to gray for faces and eyes both
-        pred = FaceHelper._get_predicted_shapes(img, face)
-        right_eye = pred[cls.right_eye_pos.start:cls.right_eye_pos.end]
+    def get_right_eye(cls, shapes):
+        right_eye = shapes[cls.right_eye_pos.start:cls.right_eye_pos.end]
         return cv2.convexHull(right_eye)
 
     @classmethod

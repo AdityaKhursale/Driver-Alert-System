@@ -1,10 +1,16 @@
+import cv2
+import dlib  #TODO: update requirements.txt
 import os
-import dlib  # TODO: Update requirements
 
-
-from utils.decorators import Cached, ClassPropertyType, classproperty
+from utils.decorators import ClassPropertyType, classproperty
 from shared_data import MODELS_DIR
 from imutils import face_utils
+
+
+class FaceDescriptor:
+    def __init__(self):
+        self.face = None
+        self.shapes = None
 
 
 class FaceHelper(metaclass=ClassPropertyType):
@@ -15,10 +21,15 @@ class FaceHelper(metaclass=ClassPropertyType):
 
     @classmethod
     def get_faces(cls, img):
-        # TODO: Make it accept non grayed image
-        # without need to gray for faces and eyes both
-        fboxes = cls.face_detector(img, 0)
-        return fboxes
+        faces = []
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        fboxes = cls.face_detector(gray, 0)
+        for fbox in fboxes:
+            new_face = FaceDescriptor()
+            new_face.face = fbox
+            new_face.shapes = cls._get_predicted_shapes(gray, fbox)
+            faces.append(new_face)
+        return faces
 
     @classproperty
     def face_detector(cls):
@@ -38,12 +49,8 @@ class FaceHelper(metaclass=ClassPropertyType):
         face_br = tuple((face.br_corner().x, face.br_corner().y))
         return face_tl, face_br
 
-    # TODO: Add @Cached once caching based on parameters is done
-    # TODO: Update get eye based on that to avoid code duplication
     @classmethod
     def _get_predicted_shapes(cls, img, face):
-         # TODO: Make it accept non grayed image
-        # without need to gray for faces and eyes both
         prediction = cls.predictor(img, face)
         prediction = face_utils.shape_to_np(prediction)
         return prediction
