@@ -149,7 +149,7 @@ class DriverAlertSystem:
                 v_ratio = (pupil_left + pupil_right) / 2
 
                 text = ""
-                if h_ratio <= 0.50:
+                if h_ratio <= 0.55:
                     text = "Looking right"
                     cv2.putText(frame, text, (1000, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
@@ -159,7 +159,7 @@ class DriverAlertSystem:
                     cv2.putText(frame, text, (90, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.redColor.value, 2)
-                elif h_ratio > 0.50 and h_ratio < 0.65:
+                elif h_ratio > 0.55 and h_ratio < 0.65:
                     text = "Looking center"
                     cv2.putText(frame, text, (500, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
