@@ -21,6 +21,17 @@ from vision.mouth_helper import MouthHelper
 from vision.eye import Eye
 from vision.calibration import Calibration
 
+# Emotion Imports
+import numpy as np
+from keras.models import load_model
+from statistics import mode
+from utils.datasets import get_labels
+from utils.inference import detect_faces
+from utils.inference import draw_text
+from utils.inference import draw_bounding_box
+from utils.inference import apply_offsets
+from utils.inference import load_detection_model
+from utils.preprocessor import preprocess_input
 
 args = None
 global logger
@@ -38,6 +49,21 @@ class DriverAlertSystem:
         self.mouth_helper = MouthHelper()
 
     def run(self, webcam=0):
+        """
+        Emotion Recognition
+        """
+        emotion_model_path = './models/emotion_model.hdf5'
+        emotion_labels = get_labels('fer2013')
+
+        frame_window = 10
+        emotion_offsets = (20, 40)
+
+        face_cascade = cv2.CascadeClassifier('./models/haarcascade_frontalface_default.xml')
+        emotion_classifier = load_model(emotion_model_path)
+
+        emotion_target_size = emotion_classifier.input_shape[1:3]
+        emotion_window = []
+
         logger.info("starting camera capture")
 
         self.stream = VideoStream(webcam).start()
@@ -54,8 +80,11 @@ class DriverAlertSystem:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_helper.get_faces(gray)
 
+            efaces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5,
+			            minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+
             self.ui.draw_text(frame, "Distracted Detection", (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.whiteColor.value, 1,
                         ColorPalette.blackColor.value)
             cv2.putText(frame, "Eyes:", (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         ColorPalette.whiteColor.value, 1)
@@ -70,10 +99,10 @@ class DriverAlertSystem:
                         (90, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         ColorPalette.whiteColor.value, 1)
             self.ui.draw_text(frame, "Drowsiness Detection", (0, 650), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.whiteColor.value, 1,
                         ColorPalette.blackColor.value)
             self.ui.draw_text(frame, "Emotion Recognition", (850, 650), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, ColorPalette.whiteColor.value, 1,
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, ColorPalette.whiteColor.value, 1,
                         ColorPalette.blackColor.value)
             cv2.putText(frame, "Driver Mood:", (900, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                         ColorPalette.whiteColor.value, 1)
@@ -149,17 +178,17 @@ class DriverAlertSystem:
                 v_ratio = (pupil_left + pupil_right) / 2
 
                 text = ""
-                if h_ratio <= 0.55:
+                if h_ratio <= 0.45:
                     text = "Looking right"
                     cv2.putText(frame, text, (1000, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.redColor.value, 2)
-                elif h_ratio >= 0.65:
+                elif h_ratio >= 0.75:
                     text = "Looking left"
                     cv2.putText(frame, text, (90, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 ColorPalette.redColor.value, 2)
-                elif h_ratio > 0.55 and h_ratio < 0.65:
+                elif h_ratio > 0.45 and h_ratio < 0.75:
                     text = "Looking center"
                     cv2.putText(frame, text, (500, 90),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1,
@@ -173,6 +202,47 @@ class DriverAlertSystem:
                             (183, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             ColorPalette.blueColor.value, 1)
 
+                """
+                Emotion Recognition
+                """
+                for face_coordinates in efaces:
+
+                    x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
+                    gray_face = gray[y1:y2, x1:x2]
+                    try:
+                        gray_face = cv2.resize(gray_face, (emotion_target_size))
+                    except:
+                        continue
+
+                    gray_face = preprocess_input(gray_face, True)
+                    gray_face = np.expand_dims(gray_face, 0)
+                    gray_face = np.expand_dims(gray_face, -1)
+                    emotion_prediction = emotion_classifier.predict(gray_face)
+                    emotion_probability = np.max(emotion_prediction)
+                    emotion_label_arg = np.argmax(emotion_prediction)
+                    emotion_text = emotion_labels[emotion_label_arg]
+                    emotion_window.append(emotion_text)
+
+                    if len(emotion_window) > frame_window:
+                        emotion_window.pop(0)
+                    try:
+                        emotion_mode = mode(emotion_window)
+                    except:
+                        continue
+
+                    if emotion_text == 'angry':
+                        color = ColorPalette.redColor.value
+                    elif emotion_text == 'sad':
+                        color = ColorPalette.redColor.value
+                    elif emotion_text == 'happy':
+                        color = ColorPalette.greenColor.value
+                    elif emotion_text == 'surprise':
+                        color = ColorPalette.blueColor.value
+                    else:
+                        color = ColorPalette.yellowColor.value
+                    cv2.putText(frame, emotion_mode.capitalize(), (1050, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.7, color, 2)
             cv2.imshow("Driver Alert System", frame)
             key = cv2.waitKey(1) & 0xFF
 
