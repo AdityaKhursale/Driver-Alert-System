@@ -1,4 +1,5 @@
 import argparse
+from re import M
 import cv2
 
 import logging
@@ -171,6 +172,49 @@ class DriverAlertSystem:
                                 cv2.FONT_HERSHEY_SIMPLEX, 2, ColorPalette.redColor.value, 4)
                     drowsinessAlertSet -= 1
 
+
+                """
+                Emotion Recognition
+                """
+                for face_coordinates in efaces:
+
+                    x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
+                    gray_face = gray[y1:y2, x1:x2]
+                    try:
+                        gray_face = cv2.resize(gray_face, (emotion_target_size))
+                    except:
+                        continue
+
+                    gray_face = preprocess_input(gray_face, True)
+                    gray_face = np.expand_dims(gray_face, 0)
+                    gray_face = np.expand_dims(gray_face, -1)
+                    emotion_prediction = emotion_classifier.predict(gray_face)
+                    emotion_probability = np.max(emotion_prediction)
+                    emotion_label_arg = np.argmax(emotion_prediction)
+                    emotion_text = emotion_labels[emotion_label_arg]
+                    emotion_window.append(emotion_text)
+
+                    if len(emotion_window) > frame_window:
+                        emotion_window.pop(0)
+                    try:
+                        emotion_mode = mode(emotion_window)
+                    except:
+                        continue
+
+                    if emotion_text == 'angry':
+                        color = ColorPalette.redColor.value
+                    elif emotion_text == 'sad':
+                        color = ColorPalette.redColor.value
+                    elif emotion_text == 'happy':
+                        color = ColorPalette.greenColor.value
+                    elif emotion_text == 'surprise':
+                        color = ColorPalette.blueColor.value
+                    else:
+                        color = ColorPalette.yellowColor.value
+                    cv2.putText(frame, emotion_mode.capitalize(), (1050, 702),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.7, color, 2)
+
                 """
                 Yawning check
                 """
@@ -178,17 +222,18 @@ class DriverAlertSystem:
                                  [self.mouth_helper.get_lip_boundary(face.shapes)],
                                  -1, ColorPalette.orangeColor.value, thickness=2)
                 mouth_open, m_ratio = self.mouth_helper.is_mouth_open(face.shapes)
-                if mouth_open:
+                if mouth_open and emotion_text != "surprise" and emotion_mode != "surprise":
                     if last_yawning_fr == 0 or frame_no - last_yawning_fr > 30:
                         t = Thread(target=SoundAlert.play_yawning_alert)
                         t.daemon = True
                         t.start()
                         last_yawning_fr = frame_no
-                    cv2.putText(frame, "Open", (275, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.redColor.value, 2)
                     cv2.putText(frame, "Driver is Yawning",
                                 (frame.shape[1] // 2 - 210, frame.shape[0] // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 2, ColorPalette.redColor.value, 4)
+                if m_ratio > 30:
+                    cv2.putText(frame, "Open", (275, 702),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.redColor.value, 2)
                 else:
                     cv2.putText(frame, "Closed", (275, 702),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, ColorPalette.greenColor.value, 2)
@@ -243,47 +288,6 @@ class DriverAlertSystem:
                             (183, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             ColorPalette.blueColor.value, 1)
 
-                """
-                Emotion Recognition
-                """
-                for face_coordinates in efaces:
-
-                    x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
-                    gray_face = gray[y1:y2, x1:x2]
-                    try:
-                        gray_face = cv2.resize(gray_face, (emotion_target_size))
-                    except:
-                        continue
-
-                    gray_face = preprocess_input(gray_face, True)
-                    gray_face = np.expand_dims(gray_face, 0)
-                    gray_face = np.expand_dims(gray_face, -1)
-                    emotion_prediction = emotion_classifier.predict(gray_face)
-                    emotion_probability = np.max(emotion_prediction)
-                    emotion_label_arg = np.argmax(emotion_prediction)
-                    emotion_text = emotion_labels[emotion_label_arg]
-                    emotion_window.append(emotion_text)
-
-                    if len(emotion_window) > frame_window:
-                        emotion_window.pop(0)
-                    try:
-                        emotion_mode = mode(emotion_window)
-                    except:
-                        continue
-
-                    if emotion_text == 'angry':
-                        color = ColorPalette.redColor.value
-                    elif emotion_text == 'sad':
-                        color = ColorPalette.redColor.value
-                    elif emotion_text == 'happy':
-                        color = ColorPalette.greenColor.value
-                    elif emotion_text == 'surprise':
-                        color = ColorPalette.blueColor.value
-                    else:
-                        color = ColorPalette.yellowColor.value
-                    cv2.putText(frame, emotion_mode.capitalize(), (1050, 702),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.7, color, 2)
                 
                 """
                 Head Tilt
