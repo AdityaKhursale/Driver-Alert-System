@@ -11,7 +11,7 @@ logger = logging.getLogger("driver_alert")
 
 class MouthHelper(metaclass=ClassPropertyType):
     
-    MOUTH_AR_THRESH = 30
+    MOUTH_AR_THRESH = 60
 
     @classproperty
     def lip_boundary_pos(cls):
@@ -64,5 +64,6 @@ class MouthHelper(metaclass=ClassPropertyType):
 
     @classmethod
     def is_mouth_open(cls, shapes):
-        return cls.get_aspect_ratio(shapes) > cls.MOUTH_AR_THRESH
+        ratio = cls.get_aspect_ratio(shapes)
+        return ratio > cls.MOUTH_AR_THRESH, ratio
     

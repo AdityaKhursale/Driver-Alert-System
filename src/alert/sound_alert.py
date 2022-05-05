@@ -12,3 +12,8 @@ class SoundAlert:
     @staticmethod
     def play_drowsiness_alert():
         playsound(os.path.join(RESOURCES_DIR, "you_suffer.mp3"))
+    
+    @staticmethod
+    def play_yawning_alert():
+        playsound(os.path.join(RESOURCES_DIR, "mario_die.mp3"))
+

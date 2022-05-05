@@ -31,7 +31,8 @@ class EyeHelper(metaclass=ClassPropertyType):
 
     @classmethod
     def is_eye_closed(cls, eye_marks):
-        return cls.get_aspect_ratio(eye_marks) < cls.EYE_AR_THRESH
+        ratio = cls.get_aspect_ratio(eye_marks)
+        return ratio < cls.EYE_AR_THRESH, ratio
     
     @classproperty
     def left_eye_pos(cls):
